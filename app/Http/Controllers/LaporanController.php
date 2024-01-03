@@ -14,7 +14,9 @@ class LaporanController extends Controller
     public function index(Request $request)
     {
         $tahun = $request->tahun;
-        
+        $inputMenu = $request->menu;
+        $inputBulan = $request->bulan;
+
         $transaksi = Http::get("https://tes-web.landa.id/intermediate/transaksi?tahun=$tahun")->json();
         $menu = Http::get('https://tes-web.landa.id/intermediate/menu')->json();
         $makanan = collect($menu)->where('kategori', 'makanan')->values()->pluck('menu')->toArray();
@@ -26,7 +28,8 @@ class LaporanController extends Controller
         for ($i = 1; $i <= 12; $i++) {
             $allBulan[] = Carbon::create(null, $i, 1)->format('M');
         }
-        // dd($allBulan);
+        // $c = collect($transaksi)->where('menu', 'Nasi Goreng')->whereBetween('tanggal', ['2021-01-01', '2021-01-31']);
+        // dd($c);
 
         try {
             foreach ($transaksi as $key => $value) {
@@ -41,7 +44,26 @@ class LaporanController extends Controller
         } catch (\Throwable $th) {
         }
 
-        // dd($minuman);
+        // if (isset($menu)) {
+        if ($request->ajax()) {
+            if (isset($inputMenu) && isset($inputBulan)) {
+                $month = array_keys($allBulan, $inputBulan);
+                $intBulan = $month[0] + 1;
+                $tanggal = "$tahun-0$intBulan";
+                $filter = collect($transaksi)->where('menu', $inputMenu)->whereBetween('tanggal', ["$tanggal-01", "$tanggal-31"])->values();
+            } else if (!isset($inputBulan)) {
+                $filter = collect($transaksi)->where('menu', $inputMenu)->whereBetween('tanggal', ["$tahun-01-01", "$tahun-12-31"])->values();
+            }elseif (!isset($inputMenu)) {
+                $month = array_keys($allBulan, $inputBulan);
+                $intBulan = $month[0] + 1;
+                $tanggal = "$tahun-0$intBulan";
+                $filter = collect($transaksi)->whereBetween('tanggal', ["$tanggal-01", "$tanggal-31"])->values();
+            }
+
+            return json_encode($filter);
+        }
+
+        // dd(array_keys($allBulan, 'Jan'));
         return view('tampil', compact('perBulan', 'allBulan', 'makanan', 'minuman', 'tahun'));
     }
 

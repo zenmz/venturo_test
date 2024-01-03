@@ -98,14 +98,15 @@
                                             $total += $price;
                                             $totalBulan[$item] += $price;
                                         @endphp
-                                        <td style="text-align: right;">
+                                        <td style="text-align: right;"
+                                            onclick="detail('{{ $menu }}', '{{ $item }}')">
                                             {{ isset($perBulan[$menu][$item]) ? $perBulan[$menu][$item] : '' }}
                                         </td>
                                     @endforeach
                                     @php
                                         $allTotal += $total;
                                     @endphp
-                                    <td style="text-align: right;"><b>{{ $total }}</b></td>
+                                    <td style="text-align: right;" onclick="detail('{{ $menu }}')"><b>{{ $total }}</b></td>
                                 </tr>
                             @endforeach
                             <tr>
@@ -123,14 +124,15 @@
                                             $total += $price;
                                             $totalBulan[$item] += $price;
                                         @endphp
-                                        <td style="text-align: right;">
+                                        <td style="text-align: right;"
+                                            onclick="detail('{{ $menu }}', '{{ $item }}')">
                                             {{ isset($perBulan[$menu][$item]) ? $perBulan[$menu][$item] : '' }}
                                         </td>
                                     @endforeach
                                     @php
                                         $allTotal += $total;
                                     @endphp
-                                    <td style="text-align: right;"><b>{{ $total }}</b></td>
+                                    <td style="text-align: right;" onclick="detail('{{ $menu }}')"><b>{{ $total }}</b></td>
                                 </tr>
                             @endforeach
 
@@ -138,7 +140,7 @@
                             <tr class="table-dark">
                                 <td><b>Total</b></td>
                                 @foreach ($allBulan as $item)
-                                    <td style="text-align: right;">
+                                    <td style="text-align: right;" onclick="detail(null, '{{ $item }}')">
                                         <b>{{ $totalBulan[$item] != 0 ? $totalBulan[$item] : '' }}</b>
                                     </td>
                                 @endforeach
@@ -146,6 +148,24 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Detail Penjualan</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="modal-body">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             {{-- @isset($menu)
@@ -167,6 +187,62 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+        integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script>
+        function detail(menu, bulan= null) {
+            const queryString = window.location.search;
+            const params = new URLSearchParams(queryString);
+            const tahun = params.get('tahun');
+
+            $('#modal-body').empty()
+
+            $.ajax({
+                type: "get",
+                url: "/laporan",
+                data: {
+                    menu: menu,
+                    bulan: bulan,
+                    tahun: tahun
+                },
+                dataType: "json",
+                success: function(response) {
+                    console.log(response);
+                    $('#exampleModal').modal('show');
+                    if (response.length === 0) {
+                        $('#modal-body').append('<h5>Data tidak tersedia<h5>');
+                    } else {
+                        $('#modal-body').append(
+                            `<table class="table">
+                            <thead>
+                                <tr>
+                                <th scope="col">Tanggal</th>
+                                <th scope="col">Menu</th>
+                                <th scope="col">Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody id='table-body'>
+                                
+                                
+                            </tbody>
+                        </table>`
+                        );
+                        $('#table-body').append(
+                            response.map((v, e) => {
+                                return `<tr>
+                            <td>${v.tanggal}</td>
+                            <td>${v.menu}</td>
+                            <td>${v.total}</td>
+                            </tr>`
+                            })
+                        );
+                    }
+                }
+            });
+        }
     </script>
 
 
